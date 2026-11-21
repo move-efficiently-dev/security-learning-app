@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仕事とITの研究所 学習アプリ（試作版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#14213D; --gold:#FCA311; --ink:#1a1a1a; --gray:#6b7280;
+    --line:#DCDCDC; --bg:#FFFFFF; --soft:#F7F5F0; --ok:#1F7A4D; --ng:#B3261E;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Noto Sans JP",sans-serif; color:var(--ink); background:var(--bg);
+       font-size:16px; line-height:1.75; letter-spacing:.05em;}
+  header{background:var(--navy); color:#fff; padding:20px 16px;}
+  header .brand{font-size:13px; color:var(--gold); font-weight:700; letter-spacing:.15em;}
+  header h1{font-size:22px; font-weight:900; margin-top:2px;}
+  header p{font-size:13px; opacity:.85;}
+  .wrap{max-width:880px; margin:0 auto; padding:16px;}
+  nav.tabs{display:flex; gap:8px; flex-wrap:wrap; margin:16px 0;}
+  nav.tabs button{flex:1; min-width:120px; padding:10px 8px; border:1px solid var(--line);
+    background:#fff; border-radius:8px; font-family:inherit; font-size:15px; font-weight:700; cursor:pointer;}
+  nav.tabs button.active{background:var(--navy); color:#fff; border-color:var(--navy);}
+  section{display:none;}
+  section.active{display:block;}
+  .card{border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; background:#fff;}
+  .card h2{font-size:18px; font-weight:900; margin-bottom:8px;}
+  .card h3{font-size:16px; font-weight:700; margin:12px 0 6px;}
+  .tag{display:inline-block; font-size:12px; font-weight:700; color:var(--navy);
+    border:1px solid var(--gold); border-radius:999px; padding:1px 10px; margin-right:6px;}
+  .muted{color:var(--gray); font-size:13px;}
+  label{font-size:14px; font-weight:700; display:block; margin-top:10px;}
+  input[type=text], select{width:100%; padding:10px; border:1px solid var(--line); border-radius:8px;
+    font-family:inherit; font-size:16px; margin-top:4px;}
+  .btn{display:inline-block; background:var(--navy); color:#fff; border:none; border-radius:8px;
+    padding:11px 20px; font-family:inherit; font-size:15px; font-weight:700; cursor:pointer; margin-top:12px;}
+  .btn.gold{background:var(--gold); color:var(--navy);}
+  .btn.plain{background:#fff; color:var(--navy); border:1px solid var(--navy);}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .course-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap;}
+  .status{font-size:13px; font-weight:700;}
+  .status.pass{color:var(--ok);} .status.fail{color:var(--ng);} .status.none{color:var(--gray);}
+  ul.checklist{list-style:none; margin-top:6px;}
+  ul.checklist li{padding:4px 0 4px 26px; position:relative; font-size:14px;}
+  ul.checklist li::before{content:"☐"; position:absolute; left:2px;}
+  .q{border-top:1px solid var(--line); padding:14px 0;}
+  .q:first-of-type{border-top:none;}
+  .q p{font-weight:700; margin-bottom:8px;}
+  .q label{font-weight:400; display:block; margin:6px 0; padding:8px 10px; border:1px solid var(--line); border-radius:8px; cursor:pointer;}
+  .q label.sel{border-color:var(--navy); background:var(--soft);}
+  .q .exp{display:none; font-size:14px; background:var(--soft); border-radius:8px; padding:10px; margin-top:8px;}
+  .q .exp.show{display:block;}
+  .q .verdict{font-weight:900;}
+  .q .verdict.ok{color:var(--ok);} .q .verdict.ng{color:var(--ng);}
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:8px;}
+  th,td{border:1px solid var(--line); padding:6px 8px; text-align:center;}
+  th{background:var(--soft); font-weight:700;}
+  td.name, th.name{text-align:left;}
+  .result-big{font-size:20px; font-weight:900;}
+  .src{border-top:1px solid var(--line); padding:10px 0;}
+  .src:first-of-type{border-top:none;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;}
+  .chip{font-size:12px; border:1px solid var(--line); border-radius:999px; padding:2px 10px; background:var(--soft);}
+  footer{color:var(--gray); font-size:12px; text-align:center; padding:24px 16px;}
+  @media (max-width:600px){ header h1{font-size:19px;} .btn{width:100%; text-align:center;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">仕事とITの研究所</div>
+  <h1>セキュリティ学習アプリ（試作版）</h1>
+  <p>中小企業向け従業員教育：受講・確認テスト・記録・集計の試作です。データはこのブラウザ内にだけ保存されます。</p>
+</header>
+<div class="wrap">
+  <nav class="tabs">
+    <button id="tab-learn" class="active" onclick="showTab('learn')">受講する</button>
+    <button id="tab-admin" onclick="showTab('admin')">記録・集計</button>
+    <button id="tab-info" onclick="showTab('info')">セキュリティ情報</button>
+  </nav>
+
+  <!-- 受講 -->
+  <section id="sec-learn" class="active">
+    <div class="card">
+      <h2>受講者</h2>
+      <div id="learner-current" class="muted">未登録です。氏名と部署を登録してください。</div>
+      <label>氏名<input type="text" id="learner-name" placeholder="例：山田 太郎"></label>
+      <label>部署<input type="text" id="learner-dept" placeholder="例：営業部"></label>
+      <button class="btn" onclick="registerLearner()">この内容で登録・切替</button>
+      <div id="learner-list" style="margin-top:10px;"></div>
+    </div>
+    <div id="course-list"></div>
+    <div id="quiz-area"></div>
+  </section>
+
+  <!-- 記録・集計（管理者） -->
+  <section id="sec-admin">
+    <div class="card">
+      <h2>受講状況の集計</h2>
+      <div id="admin-summary" class="muted">記録がありません。</div>
+      <div id="admin-matrix"></div>
+      <h3>テーマ別の正答率（全受講・延べ）</h3>
+      <div id="admin-rates" class="muted">記録がありません。</div>
+      <button class="btn plain" onclick="exportCSV()">受講記録をCSVでダウンロード</button>
+    </div>
+    <div class="card">
+      <h2>リマインド対象（未修了のある受講者）</h2>
+      <div id="admin-remind" class="muted">対象者はいません。</div>
+      <p class="muted" style="margin-top:8px;">試作版では画面表示のみです。本番では未受講者への自動通知（週次）と管理者への月次サマリーを実装します。</p>
+    </div>
+    <div class="card">
+      <h2>データ管理</h2>
+      <button class="btn plain" onclick="loadSample()">サンプルデータを読み込む</button>
+      <button class="btn plain" onclick="clearAll()">すべてのデータを消去</button>
+      <p class="muted" style="margin-top:8px;">サンプルデータは集計画面の見え方を確認するためのダミーです（氏名に「サンプル」と付きます）。</p>
+    </div>
+  </section>
+
+  <!-- 情報アグリゲーション -->
+  <section id="sec-info">
+    <div class="card">
+      <h2>公的機関のセキュリティ情報</h2>
+      <p class="muted">試作版では情報源へのリンクと分類の枠組みのみを表示します。自動取得・カテゴリ別表示は本番で実装します（要件定義書 4.9）。</p>
+      <div class="src">
+        <strong>IPA（情報処理推進機構）</strong>：重要なセキュリティ情報
+        <div><a href="https://www.ipa.go.jp/security/alert-rss.rdf" target="_blank" rel="noopener">公式フィード</a> ／ <a href="https://www.ipa.go.jp/security/" target="_blank" rel="noopener">セキュリティセンター</a></div>
+      </div>
+      <div class="src">
+        <strong>JPCERT/CC</strong>：注意喚起・Weekly Report
+        <div><a href="https://www.jpcert.or.jp/" target="_blank" rel="noopener">公式サイト</a></div>
+      </div>
+      <div class="src">
+        <strong>JVN</strong>：脆弱性対策情報
+        <div><a href="https://jvn.jp/" target="_blank" rel="noopener">公式サイト</a></div>
+      </div>
+      <h3>分類（対象製品・機器の軸）</h3>
+      <div class="chips">
+        <span class="chip">Windows / macOS</span><span class="chip">iOS / Android</span>
+        <span class="chip">サーバー（Windows Server / Linux）</span><span class="chip">ブラウザ</span>
+        <span class="chip">ネットワーク機器・VPN装置</span><span class="chip">言語・ランタイム（Java / Python / PHP / Node.js）</span>
+        <span class="chip">Microsoft 365 / Google Workspace</span><span class="chip">IoT機器</span>
+      </div>
+    </div>
+  </section>
+</div>
+<footer>仕事とITの研究所 学習アプリ 試作版 v0.1 ／ 用語は JIS Q 27000／27001 の体系に準拠</footer>
+
+<script>
+/* ===== 教材データ（問題バンク） =====
+   4テーマ×5問。出典：素材集試作（materials_sample_*_v1.md）。
+   choices は表示時にシャッフルされるため、answer は元の選択肢の添字。 */
+const COURSES = [
+ { id:"password", title:"パスワード", control:"ISO/IEC 27001 附属書A 5.17「認証情報」",
+   intro:"パスワード（認証情報）の使い回しや共有が、なぜ被害を広げるのかを学びます。",
+   checklist:["サービスごとに異なるパスワードを設定している","パスワードは長く複雑にし、パスフレーズも活用している","覚えきれないパスワードはパスワードマネージャーで一元管理している","認証情報を他人に教えたり、共有したりしていない","認証情報を紙に書いてモニター等に貼っていない","漏えいの可能性を知ったら、直ちに変更し、管理者へ連絡する手順を知っている","可能なサービスでは多要素認証を有効にしている"],
+   questions:[
+    {q:"複数のサービスで同じパスワードを使い回すことが危険な理由として、最も適切なものはどれか。",
+     choices:["パスワードの入力回数が増えるから","1か所で漏えいすると、他のサービスでも不正ログインに悪用されるおそれがあるから","サービスごとに利用規約が異なるから","ブラウザに保存できなくなるから"], answer:1,
+     exp:"漏えいした認証情報を他のサービスで試す手口があるため、使い回しは被害を連鎖させます。サービスごとに異なるパスワードを設定することが基本です。"},
+    {q:"安全なパスワードの作り方として、最も適切なものはどれか。",
+     choices:["自分の誕生日と名前を組み合わせる","短くても記号を1文字入れる","複数の単語を組み合わせた長いパスフレーズにする","覚えやすい単語1つをそのまま使う"], answer:2,
+     exp:"基本は「長く複雑にすること」。単語を組み合わせたパスフレーズは、長さを確保しながら覚えやすさも両立できます。"},
+    {q:"サービスごとに異なるパスワードを覚えきれない場合の対応として、最も適切なものはどれか。",
+     choices:["紙のメモに書いてモニターに貼る","使い回しに戻す","パスワードマネージャーで一元管理する","ブラウザのメモ欄に平文で保存する"], answer:2,
+     exp:"パスワードマネージャーを使えば、認証情報を安全に一元管理でき、使い回しを防げます。マスターパスワードは特に長く複雑にし、多要素認証と組み合わせることが望ましいとされています。"},
+    {q:"同僚から「ログインできないので、あなたのパスワードを教えてほしい」と頼まれた場合の対応として、最も適切なものはどれか。",
+     choices:["信頼できる同僚なので教える","教えず、管理者や情報システム担当へ対応を依頼する","一時的に教え、後で自分が変更する","チャットで送れば記録が残らないので教える"], answer:1,
+     exp:"認証情報は個人に割り当てられたものであり、他人と共有しません。困った場合は貸し借りではなく、正規の手続きで対応します（附属書A 5.17「認証情報」に対応）。"},
+    {q:"使っているサービスのパスワードが漏えいした可能性があると分かった場合、最初に行うべき対応として最も適切なものはどれか。",
+     choices:["しばらく様子を見る","そのサービスのパスワードを直ちに変更し、同じパスワードを使っている他のサービスも変更する","アカウントを削除する","パスワードの末尾に「1」を足して使い続ける"], answer:1,
+     exp:"漏えいの可能性がある認証情報は速やかに変更します。使い回しをしていると変更対象が広がるため、日頃からサービスごとに分けておくことが被害を小さくします。"}
+   ]},
+ { id:"phishing", title:"怪しいメール", control:"対応する管理策は確認中（公開前に確定）",
+   intro:"フィッシングメールと標的型攻撃メールの手口と、見分け方・受け取ったときの対応を学びます。",
+   checklist:["送信元ドメインが公式のものかどうかを確認している","リンク先のURLを確認してから開いている（リンクを安易に開いていない）","不在連絡や請求等を装うメールは、公式アプリや公式サイト等の正規ルートで確認している","表示名や見た目が本物そっくりでも、それだけで信用していない","心当たりのない添付ファイルを安易に開いていない","不審なメールを受け取ったときの報告・相談先（管理者や情報システム担当）を知っている","誤って認証情報を入力してしまった場合の対応（直ちに変更し、管理者へ連絡する）を知っている"],
+   questions:[
+    {q:"フィッシングメールについて、最も適切な説明はどれか。",
+     choices:["添付ファイルを開くとパソコンの動作が遅くなるメール","本物そっくりの偽サイトへ誘導し、IDやパスワードを入力させて盗み取るメール","広告を大量に送り付ける迷惑メール","送信元が不明なメールはすべてフィッシングメールである"], answer:1,
+     exp:"フィッシングメールは、リンクから本物そっくりの偽サイトへ誘導し、利用者が自ら入力したIDやパスワード等の認証情報を盗み取る手口です。"},
+    {q:"標的型攻撃メールとフィッシングメールの違いとして、最も適切なものはどれか。",
+     choices:["標的型攻撃メールは特定の組織や個人を狙って送られる","フィッシングメールは添付ファイルを使わない","標的型攻撃メールは日本語では送られない","違いはなく、同じ手口の別名である"], answer:0,
+     exp:"怪しいメールは大きく分けて、不特定多数を偽サイトに誘い込むフィッシングメールと、特定の組織を狙い撃つ標的型攻撃メールがあります。どちらも見た目だけで判断するのは禁物です。"},
+    {q:"宅配便業者を装った「お荷物をお届けにあがりましたが不在でした」というメールが届いた場合の対応として、最も適切なものはどれか。",
+     choices:["メール内のリンクから再配達の手続きをする","送信元の表示名が業者名なので、そのまま信用する","メール内のリンクは開かず、公式アプリや公式サイト等の正規ルートで配送状況を確認する","返信して配達員に連絡する"], answer:2,
+     exp:"不在連絡を装った偽のメールが実際に確認されています。リンクは安易に開かず、正規ルートで確認することが基本です。"},
+    {q:"怪しいメールの真偽を確認する際に確認すべき点として、最も適切なものはどれか。",
+     choices:["メールのデザインが本物らしいかどうか","送信元ドメインとリンク先のURL","件名に自分の名前が入っているかどうか","送信された時刻が営業時間内かどうか"], answer:1,
+     exp:"送信元ドメインとURLの確認が鉄則です。表示名や見た目は偽装できるため、それだけで判断しません。"},
+    {q:"怪しいメールのリンク先でIDとパスワードを入力してしまったことに気付いた場合、最初に行うべき対応として最も適切なものはどれか。",
+     choices:["しばらく様子を見る","そのまま使い続ける","直ちにパスワードを変更し、管理者や情報システム担当へ連絡する","入力したサイトへ削除を依頼するメールを送る"], answer:2,
+     exp:"入力した認証情報は盗まれた前提で対応します。速やかなパスワード変更と管理者への連絡が被害の拡大を防ぎます。"}
+   ]},
+ { id:"mfa", title:"多要素認証", control:"ISO/IEC 27001 附属書A 8.5「安全な認証」",
+   intro:"パスワードに別の種類の要素を組み合わせる多要素認証の仕組みと、運用上の注意を学びます。",
+   checklist:["業務で使うクラウドサービスで多要素認証を有効にしている","社外からアクセスする業務ツールでは、特に多要素認証を有効にしている","認証に使うスマートフォン等の端末を他人に貸したり、共用したりしていない","身に覚えのない承認要求は承認せず、管理者へ連絡する手順を知っている","認証に使う端末を紛失したときや機種変更したときの手続きを知っている","復旧用の手段（バックアップコード等）を安全な場所に保管している","パスワード自体の管理（使い回しをしない等）も併せて行っている"],
+   questions:[
+    {q:"多要素認証（MFA）について、最も適切な説明はどれか。",
+     choices:["パスワードを2回入力する仕組み","パスワード等の「知識情報」に、スマートフォン等の「所持情報」や指紋等の「生体情報」など、異なる種類の要素を組み合わせて認証する仕組み","パスワードの文字数を2倍にする仕組み","ログインできる端末を2台までに制限する仕組み"], answer:1,
+     exp:"多要素認証は異なる種類の要素を組み合わせることが要点です。同じ種類の要素を重ねても多要素にはなりません。"},
+    {q:"認証の要素の分類として、正しい組み合わせはどれか。",
+     choices:["パスワード＝所持情報、スマートフォン＝知識情報、指紋＝生体情報","パスワード＝知識情報、スマートフォン＝生体情報、指紋＝所持情報","パスワード＝知識情報、スマートフォン＝所持情報、指紋＝生体情報","パスワード＝生体情報、スマートフォン＝知識情報、指紋＝所持情報"], answer:2,
+     exp:"「知っているもの」が知識情報、「持っているもの」が所持情報、「体の一部」が生体情報です。多要素認証はこの分類の異なる要素を組み合わせます。"},
+    {q:"パスワードを適切に設定していても、それだけでは不十分とされる理由として、最も適切なものはどれか。",
+     choices:["パスワードには有効期限が決められているから","パスワードは推測やリスト型攻撃で突破されるおそれがあるから","パスワードは入力に時間がかかるから","パスワードは端末ごとに変える必要があるから"], answer:1,
+     exp:"パスワードは推測や、漏えいした認証情報のリストを使うリスト型攻撃で突破され得ます。単一の要素だけに頼らないことが基本です。"},
+    {q:"多要素認証を設定していれば、パスワードが漏えいしても不正ログインを防ぎやすい理由として、最も適切なものはどれか。",
+     choices:["パスワードの変更が不要になるから","スマートフォンや生体情報など、もう一方の要素がなければログインできないから","漏えいしたパスワードが自動で無効になるから","ログインの履歴が残らなくなるから"], answer:1,
+     exp:"攻撃者がパスワードを知っても、利用者本人しか持っていない所持情報や生体情報までは用意できません。要素を分けることで安全性が高まります（附属書A 8.5「安全な認証」に対応）。"},
+    {q:"身に覚えのないログイン承認の要求がスマートフォンに繰り返し届いた場合の対応として、最も適切なものはどれか。",
+     choices:["面倒なので承認して止める","承認せず、管理者や情報システム担当へ連絡する","要求が来たサービスのアカウントを削除する","スマートフォンの電源を切って放置する"], answer:1,
+     exp:"身に覚えのない承認要求は、第三者がパスワードを突破してログインを試みている可能性があります。安易に承認せず、正規の連絡先へ相談します。"}
+   ]},
+ { id:"backup", title:"バックアップ", control:"ISO/IEC 27001 附属書A 8.13「情報のバックアップ」",
+   intro:"機器の故障やランサムウェアに備えるバックアップの取り方と、復旧確認の重要性を学びます。",
+   checklist:["重要な業務データのバックアップを定期的に実施している","バックアップの保存先を複数の場所（外付けハードディスク、クラウドストレージ等）に分けている","バックアップ用の媒体をパソコンに接続したままにしていない","組織のルールで定められた対象と頻度でバックアップを実施している","バックアップが正常に完了しているかを確認している","バックアップから復旧（リストア）できるかを定期的に確認している","機器の故障やマルウェア感染が起きたときの連絡先（管理者や情報システム担当）を知っている"],
+   questions:[
+    {q:"業務データのバックアップが必要な理由として、最も適切なものはどれか。",
+     choices:["パソコンの動作を速くするため","機器の故障だけでなく、ランサムウェア等の被害でデータが使えなくなる事態に備えるため","データの容量を減らすため","監査のときに提出するためだけに必要である"], answer:1,
+     exp:"データを失う原因は故障だけではありません。データを人質に身代金を要求するランサムウェアの被害も深刻であり、復旧できる手段を日頃から用意しておくことが基本です。"},
+    {q:"ランサムウェアについて、最も適切な説明はどれか。",
+     choices:["パソコンの動作を遅くするだけのプログラム","データを使用できなくし、復旧と引き換えに金銭（身代金）を要求する不正プログラム","広告を表示するプログラム","パスワードを自動で変更するプログラム"], answer:1,
+     exp:"ランサムウェアは、感染した端末や共有ファイルのデータを使用できなくし、身代金を要求する手口です。支払っても復旧できる保証はないため、バックアップによる備えが重要になります。"},
+    {q:"バックアップをパソコン本体に接続したままの外付けハードディスクだけに保存する運用のリスクとして、最も適切なものはどれか。",
+     choices:["バックアップの取得に時間がかかる","本体がランサムウェアに感染した際、接続したままのバックアップも一緒に感染・破壊されるおそれがある","ハードディスクの容量が不足する","バックアップの保存先が分からなくなる"], answer:1,
+     exp:"本体と同じ場所に繋ぎっぱなしのバックアップは、本体と一緒に被害を受けるリスクがあります。保存先の分け方が要点です。"},
+    {q:"バックアップの保存方法として、最も適切なものはどれか。",
+     choices:["パソコン本体の中だけに保存する","外付けのハードディスクや安全なクラウドストレージなど、複数の場所に分けて定期的に保存する","重要なファイルだけを、その都度手作業で保存する","年に1回だけまとめて保存する"], answer:1,
+     exp:"複数の場所に分け、定期的に保存することが基本です（附属書A 8.13「情報のバックアップ」に対応）。"},
+    {q:"バックアップを定期的に取得していても、いざというときに復旧できない事態を防ぐための対応として、最も適切なものはどれか。",
+     choices:["バックアップの容量だけを確認する","バックアップから実際に復旧（リストア）できるかを定期的に確認する","バックアップの保存先を1か所にまとめる","バックアップの頻度を下げる"], answer:1,
+     exp:"取得したバックアップが正常に使える状態であるかは、実際に復旧を試みて初めて確認できます。復旧手順の確認まで含めて備えとします。"}
+   ]}
+];
+const PASS_RATE = 0.8;   /* 合格ライン：正答率80%以上（要件定義書の想定） */
+const TRIAL_COUNT = 6;   /* 無料体験：全テーマから6問（要件定義書の想定） */
+</script>
+
+<script>
+/* ===== アプリ本体（試作版） =====
+   保存先はブラウザの localStorage のみ。本番ではサーバー側に記録し、
+   証跡出力・改ざん耐性を持たせる（要件定義書 5章・6章）。 */
+const LS = { learners:"sla_learners", current:"sla_current", records:"sla_records" };
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const courseById = id => COURSES.find(c => c.id === id);
+const currentLearner = () => load(LS.learners, []).find(l => l.id === load(LS.current, null)) || null;
+
+function showTab(name) {
+  for (const t of ["learn", "admin", "info"]) {
+    document.getElementById("sec-" + t).classList.toggle("active", t === name);
+    document.getElementById("tab-" + t).classList.toggle("active", t === name);
+  }
+  if (name === "admin") renderAdmin();
+}
+
+/* ---- 受講者 ---- */
+function registerLearner() {
+  const name = document.getElementById("learner-name").value.trim();
+  const dept = document.getElementById("learner-dept").value.trim();
+  if (!name) { alert("氏名を入力してください。"); return; }
+  const learners = load(LS.learners, []);
+  let l = learners.find(x => x.name === name && x.dept === dept);
+  if (!l) { l = { id: "u" + Date.now(), name, dept }; learners.push(l); save(LS.learners, learners); }
+  save(LS.current, l.id);
+  renderLearner(); renderCourses();
+}
+function switchLearner(id) { save(LS.current, id); renderLearner(); renderCourses(); }
+function renderLearner() {
+  const cur = currentLearner();
+  document.getElementById("learner-current").innerHTML = cur
+    ? `現在の受講者：<strong>${esc(cur.name)}</strong>（${esc(cur.dept || "部署未登録")}）`
+    : "未登録です。氏名と部署を登録してください。";
+  const learners = load(LS.learners, []);
+  document.getElementById("learner-list").innerHTML = learners.length
+    ? '<span class="muted">登録済みの受講者：</span> ' + learners.map(l =>
+        `<button class="btn plain" style="margin:4px 4px 0 0; padding:5px 12px;" onclick="switchLearner('${l.id}')">${esc(l.name)}</button>`).join("")
+    : "";
+}
+
+/* ---- コース一覧 ---- */
+function latestRecord(learnerId, courseId) {
+  const rs = load(LS.records, []).filter(r => r.learnerId === learnerId && r.mode === "course" && r.courseId === courseId);
+  return rs.length ? rs[rs.length - 1] : null;
+}
+function statusHTML(learnerId, courseId) {
+  if (!learnerId) return '<span class="status none">受講者を登録すると記録されます</span>';
+  const r = latestRecord(learnerId, courseId);
+  if (!r) return '<span class="status none">未受講</span>';
+  const d = new Date(r.date).toLocaleDateString("ja-JP");
+  return r.pass
+    ? `<span class="status pass">合格（${r.score}/${r.total}・${d}）</span>`
+    : `<span class="status fail">不合格（${r.score}/${r.total}・${d}）もう一度挑戦できます</span>`;
+}
+function renderCourses() {
+  const cur = currentLearner();
+  const area = document.getElementById("course-list");
+  let html = `<div class="card"><h2>無料体験テスト</h2>
+    <p>全テーマの問題バンクからランダムに${TRIAL_COUNT}問出題します。登録なしでも受験できます（記録はされません）。</p>
+    <button class="btn gold" onclick="startQuiz({mode:'trial'})">体験テストを受ける</button></div>`;
+  for (const c of COURSES) {
+    html += `<div class="card">
+      <div class="course-head"><h2>${esc(c.title)}</h2>${statusHTML(cur && cur.id, c.id)}</div>
+      <span class="tag">${esc(c.control)}</span>
+      <p style="margin-top:8px;">${esc(c.intro)}</p>
+      <button class="btn plain" onclick="toggleChecklist('${c.id}')">実践チェックリスト</button>
+      <button class="btn" onclick="startQuiz({mode:'course', courseId:'${c.id}'})" ${cur ? "" : "disabled"}>確認テストを受ける（5問）</button>
+      <ul class="checklist" id="check-${c.id}" style="display:none;">${c.checklist.map(i => `<li>${esc(i)}</li>`).join("")}</ul>
+    </div>`;
+  }
+  area.innerHTML = html;
+}
+function toggleChecklist(id) {
+  const el = document.getElementById("check-" + id);
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+/* ---- テスト ---- */
+let quiz = null; /* {mode, courseId, items:[{courseId, q, choices, answer, exp}], sel:[idx|null]} */
+function buildItems(courseId) {
+  const c = courseById(courseId);
+  return shuffle(c.questions).map(q => {
+    const order = shuffle(q.choices.map((_, i) => i));
+    return { courseId, q: q.q, choices: order.map(i => q.choices[i]), answer: order.indexOf(q.answer), exp: q.exp };
+  });
+}
+function startQuiz(spec) {
+  let items, title;
+  if (spec.mode === "trial") {
+    const all = COURSES.flatMap(c => c.questions.map(q => ({ c, q })));
+    items = shuffle(all).slice(0, TRIAL_COUNT).map(({ c, q }) => {
+      const order = shuffle(q.choices.map((_, i) => i));
+      return { courseId: c.id, q: `【${c.title}】` + q.q, choices: order.map(i => q.choices[i]), answer: order.indexOf(q.answer), exp: q.exp };
+    });
+    title = "無料体験テスト（全テーマから" + TRIAL_COUNT + "問）";
+  } else if (spec.mode === "review") {
+    items = spec.items; title = "復習：間違えた問題";
+  } else {
+    items = buildItems(spec.courseId); title = courseById(spec.courseId).title + " 確認テスト";
+  }
+  quiz = { mode: spec.mode, courseId: spec.courseId || null, items, sel: items.map(() => null), done: false };
+  renderQuiz(title);
+  document.getElementById("quiz-area").scrollIntoView({ behavior: "smooth" });
+}
+function renderQuiz(title) {
+  const area = document.getElementById("quiz-area");
+  area.innerHTML = `<div class="card"><h2>${esc(title)}</h2>
+    <p class="muted">合格ラインは正答率${Math.round(PASS_RATE * 100)}%です。問題と選択肢の順番は受験のたびに変わります。</p>
+    ${quiz.items.map((it, qi) => `<div class="q" id="q-${qi}"><p>問${qi + 1}．${esc(it.q)}</p>
+      ${it.choices.map((ch, ci) => `<label id="lb-${qi}-${ci}"><input type="radio" name="q${qi}" style="margin-right:8px;" onclick="selectChoice(${qi},${ci})">${esc(ch)}</label>`).join("")}
+      <div class="exp" id="exp-${qi}"></div></div>`).join("")}
+    <button class="btn" id="quiz-submit" onclick="submitQuiz()">回答する</button>
+    <div id="quiz-result" style="margin-top:12px;"></div></div>`;
+}
+function selectChoice(qi, ci) {
+  quiz.sel[qi] = ci;
+  quiz.items[qi].choices.forEach((_, k) =>
+    document.getElementById(`lb-${qi}-${k}`).classList.toggle("sel", k === ci));
+}
+function submitQuiz() {
+  if (quiz.sel.some(s => s === null)) { alert("未回答の問題があります。すべて回答してください。"); return; }
+  let score = 0; const wrong = [];
+  quiz.items.forEach((it, qi) => {
+    const ok = quiz.sel[qi] === it.answer;
+    if (ok) score++; else wrong.push(it);
+    const exp = document.getElementById("exp-" + qi);
+    exp.classList.add("show");
+    exp.innerHTML = `<span class="verdict ${ok ? "ok" : "ng"}">${ok ? "正解" : "不正解（正解：" + esc(it.choices[it.answer]) + "）"}</span><br>${esc(it.exp)}`;
+  });
+  const total = quiz.items.length, pass = score / total >= PASS_RATE;
+  document.getElementById("quiz-submit").disabled = true;
+  /* 記録（コース受験のみ。体験・復習は記録しない） */
+  const cur = currentLearner();
+  if (quiz.mode === "course" && cur) {
+    const records = load(LS.records, []);
+    records.push({ learnerId: cur.id, mode: "course", courseId: quiz.courseId,
+      date: new Date().toISOString(), score, total, pass,
+      details: quiz.items.map((it, i) => ({ courseId: it.courseId, correct: quiz.sel[i] === it.answer })) });
+    save(LS.records, records);
+  }
+  document.getElementById("quiz-result").innerHTML =
+    `<p class="result-big">${total}問中 ${score}問 正解（${pass ? "合格" : "不合格"}）</p>
+     ${quiz.mode === "course" ? '<p class="muted">結果を記録しました。「記録・集計」タブで確認できます。</p>' : ""}
+     ${wrong.length ? `<button class="btn gold" onclick='startReview()'>間違えた${wrong.length}問だけ復習する</button>` : ""}
+     <button class="btn plain" onclick="closeQuiz()">コース一覧に戻る</button>`;
+  quiz.wrong = wrong; quiz.done = true;
+  renderCourses();
+}
+function startReview() { if (quiz && quiz.wrong && quiz.wrong.length) startQuiz({ mode: "review", items: quiz.wrong }); }
+function closeQuiz() { quiz = null; document.getElementById("quiz-area").innerHTML = ""; renderCourses(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+
+/* ---- 集計・リマインド ---- */
+function renderAdmin() {
+  const learners = load(LS.learners, []), records = load(LS.records, []);
+  const sum = document.getElementById("admin-summary");
+  const matrix = document.getElementById("admin-matrix");
+  const rates = document.getElementById("admin-rates");
+  const remind = document.getElementById("admin-remind");
+  if (!learners.length) { sum.textContent = "受講者が登録されていません。"; matrix.innerHTML = ""; rates.textContent = "記録がありません。"; remind.textContent = "対象者はいません。"; return; }
+  const passedPairs = new Set(records.filter(r => r.pass).map(r => r.learnerId + ":" + r.courseId));
+  sum.innerHTML = `受講者 ${learners.length}人 ／ 受講記録 ${records.length}件 ／ 修了（合格） ${passedPairs.size}コース`;
+  matrix.innerHTML = `<table><tr><th class="name">受講者</th>${COURSES.map(c => `<th>${esc(c.title)}</th>`).join("")}</tr>
+    ${learners.map(l => `<tr><td class="name">${esc(l.name)}<br><span class="muted">${esc(l.dept || "")}</span></td>
+      ${COURSES.map(c => { const r = latestRecord(l.id, c.id);
+        return `<td>${r ? (r.pass ? "合格" : "不合格") + `<br><span class="muted">${r.score}/${r.total}</span>` : "未受講"}</td>`; }).join("")}</tr>`).join("")}</table>`;
+  rates.innerHTML = COURSES.map(c => {
+    let tot = 0, ok = 0;
+    for (const r of records) for (const d of (r.details || [])) if (d.courseId === c.id) { tot++; if (d.correct) ok++; }
+    return `<div>${esc(c.title)}：${tot ? `正答率 ${Math.round(ok / tot * 100)}%（${ok}/${tot}問）` : "まだ受験データがありません"}</div>`;
+  }).join("");
+  const targets = learners.map(l => ({ l, rest: COURSES.filter(c => { const r = latestRecord(l.id, c.id); return !r || !r.pass; }) }))
+                          .filter(x => x.rest.length);
+  remind.innerHTML = targets.length
+    ? targets.map(x => `<div>${esc(x.l.name)}（${esc(x.l.dept || "")}）：未修了 ${x.rest.map(c => esc(c.title)).join("、")}</div>`).join("")
+    : "対象者はいません。全員が全コースを修了しています。";
+}
+function exportCSV() {
+  const learners = load(LS.learners, []), records = load(LS.records, []);
+  const byId = id => learners.find(l => l.id === id) || { name: "(削除済み)", dept: "" };
+  const rows = [["日時", "受講者", "部署", "テーマ", "得点", "問題数", "合否"]];
+  for (const r of records) { const l = byId(r.learnerId);
+    rows.push([new Date(r.date).toLocaleString("ja-JP"), l.name, l.dept, courseById(r.courseId)?.title || r.courseId, r.score, r.total, r.pass ? "合格" : "不合格"]); }
+  const csv = "﻿" + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "受講記録.csv"; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ---- サンプル・初期化 ---- */
+function loadSample() {
+  const learners = load(LS.learners, []), records = load(LS.records, []);
+  const mk = (name, dept) => { const l = { id: "s" + name, name, dept }; if (!learners.find(x => x.id === l.id)) learners.push(l); return l; };
+  const A = mk("サンプルA", "営業部"), B = mk("サンプルB", "総務部"), C = mk("サンプルC", "製造部");
+  const rec = (l, cid, score) => { const c = courseById(cid);
+    records.push({ learnerId: l.id, mode: "course", courseId: cid, date: new Date(Date.now() - 86400000).toISOString(),
+      score, total: 5, pass: score / 5 >= PASS_RATE,
+      details: c.questions.map((_, i) => ({ courseId: cid, correct: i < score })) }); };
+  if (!records.some(r => r.learnerId === A.id)) { rec(A, "password", 5); rec(A, "phishing", 4); rec(A, "mfa", 3); rec(B, "password", 4); rec(C, "backup", 5); }
+  save(LS.learners, learners); save(LS.records, records);
+  renderLearner(); renderCourses(); renderAdmin();
+  alert("サンプルデータを読み込みました。「記録・集計」タブで確認してください。");
+}
+function clearAll() {
+  if (!confirm("受講者と受講記録をすべて消去します。よろしいですか。")) return;
+  localStorage.removeItem(LS.learners); localStorage.removeItem(LS.current); localStorage.removeItem(LS.records);
+  renderLearner(); renderCourses(); renderAdmin(); closeQuiz();
+}
+
+renderLearner(); renderCourses();
+</script>
+</body>
+</html>
